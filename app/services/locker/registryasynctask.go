@@ -12,31 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package events
+package locker
 
 import (
-	"encoding/gob"
-
-	"github.com/harness/gitness/events"
-
-	"github.com/google/wire"
+	"context"
+	"fmt"
+	"time"
 )
 
-func ProvideReaderFactory(eventsSystem *events.System) (*events.ReaderFactory[*Reader], error) {
-	return NewReaderFactory(eventsSystem)
-}
-
-func ProvideArtifactReporter(eventsSystem *events.System) (*Reporter, error) {
-	reporter, err := NewReporter(eventsSystem)
+func (l Locker) LockResource(
+	ctx context.Context,
+	key string,
+	expiry time.Duration,
+) (func(), error) {
+	unlockFn, err := l.lock(ctx, namespaceRegistry, key, expiry)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to lock mutex for key [%s]: %w", key, err)
 	}
-	gob.Register(&DockerArtifact{})
-	gob.Register(&HelmArtifact{})
-	return reporter, nil
-}
 
-var WireSet = wire.NewSet(
-	ProvideReaderFactory,
-	ProvideArtifactReporter,
-)
+	return unlockFn, nil
+}

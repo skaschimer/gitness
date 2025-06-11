@@ -12,25 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package locker
+package api
 
-import (
-	"context"
-	"fmt"
-	"time"
-)
-
-func (l Locker) LockRpmRepoData(
-	ctx context.Context,
-	registryID int64,
-	expiry time.Duration,
-) (func(), error) {
-	key := fmt.Sprintf("%d/repodata", registryID)
-
-	unlockFn, err := l.lock(ctx, namespaceRegistry, key, expiry)
-	if err != nil {
-		return nil, fmt.Errorf("failed to lock mutex for registry [%d] RPM repodata: %w", registryID, err)
-	}
-
-	return unlockFn, nil
+// SignedData represents a git signature part.
+type SignedData struct {
+	Type          string
+	Signature     []byte
+	SignedContent []byte
 }
